@@ -133,11 +133,11 @@ export default function EventModal({
 
   return (
     <div
-      className="gc-overlay fixed inset-0 z-50 flex items-start justify-center bg-black/20 p-4 pt-[8vh]"
+      className="gc-overlay fixed inset-0 z-50 flex items-start justify-center bg-black/20 p-3 pt-[5vh] sm:p-4 sm:pt-[8vh]"
       onMouseDown={onClose}
     >
       <div
-        className="gc-pop w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl"
+        className="gc-pop max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* 상단 색상 바 */}
@@ -145,7 +145,7 @@ export default function EventModal({
           className="h-1.5 w-full"
           style={{ background: room?.border ?? "#1a73e8" }}
         />
-        <div className="px-6 pb-5 pt-4">
+        <div className="px-4 pb-5 pt-4 sm:px-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-medium text-[#3c4043]">
               {isEdit ? "예약 수정" : "회의실 예약"}
@@ -167,7 +167,7 @@ export default function EventModal({
                 maxLength={MAX_TITLE}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="예: 주간 팀 미팅"
-                className="w-full border-0 border-b-2 border-[#dadce0] px-0 py-1.5 text-[15px] outline-none focus:border-[#1a73e8]"
+                className="w-full border-0 border-b-2 border-[#dadce0] px-0 py-1.5 text-base outline-none sm:text-[15px] focus:border-[#1a73e8]"
               />
             </Field>
 
@@ -178,14 +178,14 @@ export default function EventModal({
                   maxLength={MAX_ORGANIZER}
                   onChange={(e) => setOrganizer(e.target.value)}
                   placeholder="이름 입력"
-                  className="w-full rounded-md border border-[#dadce0] px-2.5 py-2 text-sm outline-none focus:border-[#1a73e8]"
+                  className="w-full rounded-md border border-[#dadce0] px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
                 />
               </Field>
               <Field label="회의실">
                 <select
                   value={roomId}
                   onChange={(e) => setRoomId(e.target.value)}
-                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1a73e8]"
+                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
                 >
                   {ROOMS.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -201,7 +201,7 @@ export default function EventModal({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-md border border-[#dadce0] px-2.5 py-2 text-sm outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-md border border-[#dadce0] px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
               />
             </Field>
 
@@ -210,7 +210,7 @@ export default function EventModal({
                 <select
                   value={start}
                   onChange={(e) => setStart(e.target.value)}
-                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1a73e8]"
+                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
                 >
                   {timeOptions.slice(0, -1).map((t) => (
                     <option key={t} value={t}>
@@ -223,7 +223,7 @@ export default function EventModal({
                 <select
                   value={end}
                   onChange={(e) => setEnd(e.target.value)}
-                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1a73e8]"
+                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
                 >
                   {endOptions.map((t) => (
                     <option key={t} value={t}>
@@ -241,7 +241,7 @@ export default function EventModal({
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
                 placeholder="안건, 참석자 등"
-                className="w-full resize-none rounded-md border border-[#dadce0] px-2.5 py-2 text-sm outline-none focus:border-[#1a73e8]"
+                className="w-full resize-none rounded-md border border-[#dadce0] px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
               />
             </Field>
 

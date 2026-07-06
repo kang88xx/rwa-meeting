@@ -77,7 +77,7 @@ export default function EventPopover({
     <>
       <div className="fixed inset-0 z-40" onMouseDown={onClose} />
       <div
-        className="gc-pop fixed z-50 w-80 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5"
+        className="gc-pop fixed z-50 w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5"
         style={{ left, top }}
         onMouseDown={(e) => e.stopPropagation()}
       >

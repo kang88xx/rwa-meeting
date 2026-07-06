@@ -38,7 +38,24 @@ export default function CalendarApp() {
     rect: DOMRect;
   } | null>(null);
 
-  const days = useMemo(() => weekDays(anchor), [anchor]);
+  // 모바일(<768px)에서는 7일 대신 3일 뷰로 표시
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  const days = useMemo(
+    () =>
+      isMobile
+        ? Array.from({ length: 3 }, (_, i) => addDays(anchor, i))
+        : weekDays(anchor),
+    [anchor, isMobile]
+  );
+  const navStep = isMobile ? 3 : 7;
 
   const load = useCallback(async () => {
     try {
@@ -128,15 +145,15 @@ export default function CalendarApp() {
 
         <div className="flex items-center gap-1">
           <button
-            aria-label="이전 주"
-            onClick={() => setAnchor(addDays(anchor, -7))}
+            aria-label="이전"
+            onClick={() => setAnchor(addDays(anchor, -navStep))}
             className="flex h-9 w-9 items-center justify-center rounded-full text-[#5f6368] hover:bg-[#f1f3f4]"
           >
             ‹
           </button>
           <button
-            aria-label="다음 주"
-            onClick={() => setAnchor(addDays(anchor, 7))}
+            aria-label="다음"
+            onClick={() => setAnchor(addDays(anchor, navStep))}
             className="flex h-9 w-9 items-center justify-center rounded-full text-[#5f6368] hover:bg-[#f1f3f4]"
           >
             ›
@@ -307,7 +324,7 @@ export default function CalendarApp() {
       {/* 모바일용 플로팅 버튼 */}
       <button
         onClick={openCreateDefault}
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1a73e8] text-3xl text-white shadow-lg hover:bg-[#1765cc] md:hidden"
+        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-5 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1a73e8] text-3xl text-white shadow-lg hover:bg-[#1765cc] md:hidden"
         aria-label="예약 만들기"
       >
         ＋

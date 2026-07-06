@@ -171,16 +171,54 @@ export default function WeekView({
     return Math.max(START_HOUR * 60, Math.min(mins, END_HOUR * 60));
   };
 
+  // 클릭/탭한 지점이 속한 칸의 시작 분 (내림 스냅)
+  const slotStartFromY = (clientY: number, rect: DOMRect): number => {
+    const y = clientY - rect.top;
+    let mins = START_HOUR * 60 + (y / HOUR_HEIGHT) * 60;
+    mins = Math.floor(mins / SNAP) * SNAP;
+    return Math.max(START_HOUR * 60, Math.min(mins, END_HOUR * 60 - SNAP));
+  };
+
+  // 클릭/탭 지점 기준 기본 1시간 예약 생성
+  const clickToCreate = (day: Date, clientY: number, rect: DOMRect) => {
+    const start = slotStartFromY(clientY, rect);
+    const end = Math.min(start + 60, END_HOUR * 60);
+    onSlotClick(day, start, end);
+  };
+
   // 포인터 이벤트 기반 — 마우스와 터치 모두 지원
   const handleColumnPointerDown = (
     e: React.PointerEvent<HTMLDivElement>,
     day: Date,
     key: string
   ) => {
-    // 터치는 스크롤 제스처와 충돌하므로 제외 — 모바일은 + 버튼으로 예약 생성
-    if (e.pointerType === "touch") return;
-    if (e.pointerType === "mouse" && e.button !== 0) return; // 좌클릭만
     if ((e.target as HTMLElement).closest("[data-event]")) return;
+    // 터치: 드래그는 스크롤 제스처와 충돌하므로 탭만 처리
+    // (움직임 없이 손을 떼면 해당 시간 시작으로 예약 창 열기)
+    if (e.pointerType === "touch") {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const cleanup = () => {
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", cancel);
+      };
+      const up = (ev: PointerEvent) => {
+        cleanup();
+        // 스크롤 제스처는 pointercancel로 빠지지만, 미세한 움직임도 탭으로만 인정
+        if (
+          Math.abs(ev.clientX - startX) > 10 ||
+          Math.abs(ev.clientY - startY) > 10
+        )
+          return;
+        clickToCreate(day, ev.clientY, rect);
+      };
+      const cancel = () => cleanup();
+      window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", cancel);
+      return;
+    }
+    if (e.pointerType === "mouse" && e.button !== 0) return; // 좌클릭만
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
     const anchor = minsFromY(e.clientY, rect);
@@ -209,8 +247,11 @@ export default function WeekView({
       const m = minsFromY(ev.clientY, d.rect);
       const start = Math.max(START_HOUR * 60, Math.min(d.anchor, m));
       const end = Math.min(END_HOUR * 60, Math.max(d.anchor, m));
-      // 실제로 끌었을 때만(최소 한 칸) 예약 생성 — 단순 클릭/탭은 무시
-      if (end - start < SNAP) return;
+      // 드래그(최소 한 칸)면 끌어낸 범위 그대로, 단순 클릭이면 클릭한 칸 시작으로 기본 1시간
+      if (end - start < SNAP) {
+        clickToCreate(d.day, ev.clientY, d.rect);
+        return;
+      }
       onSlotClick(d.day, start, end);
     };
     const up = (ev: PointerEvent) => finish(ev);
@@ -225,7 +266,7 @@ export default function WeekView({
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* 요일 헤더 */}
       <div className="flex border-b border-[#dadce0] pr-[12px]">
-        <div className="w-14 shrink-0" />
+        <div className="w-10 shrink-0 sm:w-14" />
         {days.map((d) => {
           const today = isToday(d);
           return (
@@ -241,7 +282,7 @@ export default function WeekView({
                 {WEEKDAYS_KO[d.getDay()]}
               </span>
               <span
-                className={`mt-1 flex h-9 w-9 items-center justify-center rounded-full text-[22px] leading-none ${
+                className={`mt-1 flex h-8 w-8 items-center justify-center rounded-full text-[17px] leading-none sm:h-9 sm:w-9 sm:text-[22px] ${
                   today
                     ? "bg-[#1a73e8] font-normal text-white"
                     : "text-[#3c4043]"
@@ -258,16 +299,19 @@ export default function WeekView({
       <div ref={scrollRef} className="gc-scroll flex-1 overflow-y-auto">
         <div className="flex" style={{ height: bodyHeight }}>
           {/* 시간 눈금 */}
-          <div className="w-14 shrink-0">
+          <div className="w-10 shrink-0 sm:w-14">
             {hours.map((h, i) => (
               <div key={h} className="relative" style={{ height: HOUR_HEIGHT }}>
                 {i > 0 && (
-                  <span className="absolute -top-2 right-2 text-[10px] text-[#70757a]">
-                    {h < 12
-                      ? `오전 ${h}시`
-                      : h === 12
-                        ? "오후 12시"
-                        : `오후 ${h - 12}시`}
+                  <span className="absolute -top-2 right-1 text-[10px] text-[#70757a] sm:right-2">
+                    <span className="sm:hidden">{h}시</span>
+                    <span className="hidden sm:inline">
+                      {h < 12
+                        ? `오전 ${h}시`
+                        : h === 12
+                          ? "오후 12시"
+                          : `오후 ${h - 12}시`}
+                    </span>
                   </span>
                 )}
               </div>
