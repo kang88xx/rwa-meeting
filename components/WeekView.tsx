@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NameColorMap, Reservation } from "@/lib/types";
 import { getRoom } from "@/lib/rooms";
+import { oklchHue } from "@/lib/palette";
 import {
   WEEKDAYS_KO,
   isToday,
@@ -364,16 +365,17 @@ export default function WeekView({
 
                 {today && <CurrentTimeLine />}
 
-                {/* 예약 블록 */}
+                {/* 예약 블록 — 듀오톤 (진한 헤더: 제목+시간 / 파스텔 본문: 장소·예약자) */}
                 {positioned.map((p) => {
                   const room = getRoom(p.roomId);
                   // 예약자 이름 색상 우선, 없으면 회의실 색상으로 폴백
                   const nc = colors[p.organizer];
-                  const bg = nc?.bg ?? room?.color ?? "#e8eaed";
-                  const border = nc?.border ?? room?.border ?? "#5f6368";
+                  const h = oklchHue(nc?.border ?? room?.border ?? "#5f6368");
                   const gap = 2;
                   const widthPct = 100 / p.cols;
-                  const compact = p.height < 34;
+                  // 높이별 3단계: full(헤더+장소/예약자 2줄), compact(헤더+한 줄), mini(헤더만)
+                  const variant =
+                    p.height >= 68 ? "full" : p.height >= 34 ? "compact" : "mini";
                   return (
                     <button
                       key={p.id}
@@ -382,39 +384,74 @@ export default function WeekView({
                         e.stopPropagation();
                         onEventClick(p, e.currentTarget);
                       }}
-                      className="group absolute overflow-hidden rounded-md px-1.5 py-0.5 text-left transition-shadow hover:z-10 hover:shadow-md"
+                      className="group absolute flex flex-col overflow-hidden text-left transition-[filter] hover:z-10 hover:brightness-[1.04]"
                       style={{
                         top: p.top,
                         height: p.height - 1,
                         left: `calc(${p.col * widthPct}% + 1px)`,
                         width: `calc(${widthPct}% - ${gap + 1}px)`,
-                        background: bg,
-                        borderLeft: `3px solid ${border}`,
-                        color: border,
+                        borderRadius: variant === "mini" ? 6 : 8,
+                        background: `oklch(0.96 0.03 ${h})`,
+                        boxShadow: `0 2px 6px oklch(0.62 0.11 ${h} / 0.2)`,
                       }}
                       title={`${p.title} · ${p.start}~${p.end} · ${room?.name ?? ""} · ${p.organizer}`}
                     >
-                      {compact ? (
-                        <div className="flex items-center gap-1 truncate text-[11px] font-medium leading-none">
-                          <span className="truncate">{p.title}</span>
-                          <span className="opacity-70">
-                            {minutesToTime(timeToMinutes(p.start))}
+                      <div
+                        className={`flex items-center justify-between gap-1 px-1.5 text-white ${
+                          variant === "mini"
+                            ? "flex-1"
+                            : variant === "compact"
+                              ? "py-[3px]"
+                              : "py-1"
+                        }`}
+                        style={{ background: `oklch(0.55 0.11 ${h})` }}
+                      >
+                        <span
+                          className={`min-w-0 truncate font-bold leading-tight ${
+                            variant === "full" ? "text-[12px]" : "text-[11px]"
+                          }`}
+                        >
+                          {p.title}
+                        </span>
+                        <span
+                          className={`shrink-0 whitespace-nowrap font-semibold leading-tight opacity-90 ${
+                            variant === "full" ? "text-[10px]" : "text-[9px]"
+                          }`}
+                        >
+                          {variant === "mini"
+                            ? minutesToTime(timeToMinutes(p.start))
+                            : `${p.start}~${p.end}`}
+                        </span>
+                      </div>
+                      {variant === "full" && (
+                        <div className="flex min-h-0 flex-1 flex-col gap-px px-1.5 py-1">
+                          <span
+                            className="truncate text-[11px] leading-tight"
+                            style={{ color: `oklch(0.45 0.08 ${h})` }}
+                          >
+                            {room?.name}
+                          </span>
+                          <span
+                            className="truncate text-[11px] font-semibold leading-tight"
+                            style={{ color: `oklch(0.40 0.10 ${h})` }}
+                          >
+                            {p.organizer}
                           </span>
                         </div>
-                      ) : (
-                        <>
-                          <div className="truncate text-[12px] font-semibold leading-tight">
-                            {p.title}
-                          </div>
-                          <div className="truncate text-[11px] leading-tight opacity-90">
-                            {p.start}~{p.end}
-                          </div>
-                          {p.height > 52 && (
-                            <div className="truncate text-[11px] leading-tight opacity-75">
-                              {room?.name} · {p.organizer}
-                            </div>
-                          )}
-                        </>
+                      )}
+                      {variant === "compact" && (
+                        <div
+                          className="truncate px-1.5 py-[3px] text-[10px] leading-tight"
+                          style={{ color: `oklch(0.45 0.08 ${h})` }}
+                        >
+                          {room?.name} ·{" "}
+                          <span
+                            className="font-semibold"
+                            style={{ color: `oklch(0.40 0.10 ${h})` }}
+                          >
+                            {p.organizer}
+                          </span>
+                        </div>
                       )}
                     </button>
                   );

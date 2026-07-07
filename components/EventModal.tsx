@@ -239,7 +239,7 @@ export default function EventModal({
                 value={note}
                 maxLength={MAX_NOTE}
                 onChange={(e) => setNote(e.target.value)}
-                rows={2}
+                rows={4}
                 placeholder="안건, 참석자 등"
                 className="w-full resize-none rounded-md border border-[#dadce0] px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
               />
