@@ -114,6 +114,7 @@ export function hasConflict(
   const ce = toMinutes(candidate.end);
   for (const r of items) {
     if (r.id === ignoreId) continue;
+    if (r.deletedAt) continue; // 삭제된 예약은 시간을 점유하지 않음
     if (r.roomId !== candidate.roomId) continue;
     if (r.date !== candidate.date) continue;
     const rs = toMinutes(r.start);
@@ -185,7 +186,8 @@ export function updateReservation(
 ): Promise<MutationResult | { ok: false; error: string; notFound: true }> {
   return serialize(async () => {
     const items = await readAll();
-    const idx = items.findIndex((r) => r.id === id);
+    // 삭제된 예약은 수정 대상에서 제외
+    const idx = items.findIndex((r) => r.id === id && !r.deletedAt);
     if (idx === -1) {
       return {
         ok: false as const,
@@ -224,12 +226,15 @@ export function updateReservation(
   });
 }
 
+// 소프트 삭제: 레코드를 지우는 대신 deletedAt만 기록.
+// 캘린더에서는 숨겨지고 히스토리에는 "삭제됨"으로 남습니다.
 export function deleteReservation(id: string): Promise<boolean> {
   return serialize(async () => {
     const items = await readAll();
-    const next = items.filter((r) => r.id !== id);
-    if (next.length === items.length) return false;
-    await writeAll(next);
+    const idx = items.findIndex((r) => r.id === id && !r.deletedAt);
+    if (idx === -1) return false;
+    items[idx] = { ...items[idx], deletedAt: new Date().toISOString() };
+    await writeAll(items);
     return true;
   });
 }

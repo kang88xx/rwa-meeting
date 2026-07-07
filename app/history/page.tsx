@@ -5,7 +5,7 @@ import { NameColorMap, Reservation } from "@/lib/types";
 import { getRoom } from "@/lib/rooms";
 import { fromDateKey, toDateKey, WEEKDAYS_KO } from "@/lib/date";
 
-type Filter = "all" | "upcoming" | "past";
+type Filter = "all" | "upcoming" | "past" | "deleted";
 
 function formatDate(key: string): string {
   const d = fromDateKey(key);
@@ -62,6 +62,12 @@ export default function HistoryPage() {
     const q = query.trim().toLowerCase();
     return reservations
       .filter((r) => {
+        // 삭제된 예약은 "전체"와 "삭제" 탭에서만 표시
+        if (r.deletedAt) {
+          if (filter === "upcoming" || filter === "past") return false;
+        } else if (filter === "deleted") {
+          return false;
+        }
         if (filter === "upcoming" && endAt(r) < now) return false;
         if (filter === "past" && endAt(r) >= now) return false;
         if (!q) return true;
@@ -128,6 +134,7 @@ export default function HistoryPage() {
             ["all", "전체"],
             ["upcoming", "예정"],
             ["past", "지난"],
+            ["deleted", "삭제"],
           ] as [Filter, string][]
         ).map(([key, label]) => (
           <button
@@ -195,7 +202,7 @@ export default function HistoryPage() {
                       <li
                         key={r.id}
                         className={`flex items-stretch gap-3 rounded-lg border border-[#e0e0e0] p-3 ${
-                          past ? "opacity-70" : ""
+                          r.deletedAt || past ? "opacity-70" : ""
                         }`}
                       >
                         <span
@@ -212,7 +219,11 @@ export default function HistoryPage() {
                             <h3 className="truncate text-[15px] font-medium text-[#3c4043]">
                               {r.title}
                             </h3>
-                            {past ? (
+                            {r.deletedAt ? (
+                              <span className="shrink-0 rounded-full bg-[#fce8e6] px-2 py-0.5 text-[11px] font-medium text-[#c5221f]">
+                                삭제됨
+                              </span>
+                            ) : past ? (
                               <span className="shrink-0 rounded-full bg-[#f1f3f4] px-2 py-0.5 text-[11px] text-[#80868b]">
                                 지남
                               </span>
@@ -236,11 +247,13 @@ export default function HistoryPage() {
                         </div>
                         <div className="hidden shrink-0 flex-col items-end justify-center text-right sm:flex">
                           <span className="text-[11px] text-[#80868b]">
-                            등록
+                            등록 {formatCreated(r.createdAt)}
                           </span>
-                          <span className="text-[11px] text-[#80868b]">
-                            {formatCreated(r.createdAt)}
-                          </span>
+                          {r.deletedAt && (
+                            <span className="text-[11px] text-[#c5221f]">
+                              삭제 {formatCreated(r.deletedAt)}
+                            </span>
+                          )}
                         </div>
                       </li>
                     );

@@ -8,6 +8,8 @@ export type Reservation = {
   end: string; // HH:mm
   note?: string;
   createdAt: string; // ISO
+  // 소프트 삭제: 값이 있으면 삭제된 예약 (캘린더에서 숨기고 히스토리에는 남김)
+  deletedAt?: string; // ISO
 };
 
 export type NewReservation = Omit<Reservation, "id" | "createdAt">;

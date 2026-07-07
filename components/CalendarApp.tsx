@@ -62,7 +62,10 @@ export default function CalendarApp() {
       const res = await fetch("/api/reservations", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setReservations(data.reservations ?? []);
+      // 소프트 삭제된 예약은 캘린더에 표시하지 않음 (히스토리에서만 확인)
+      setReservations(
+        (data.reservations ?? []).filter((r: Reservation) => !r.deletedAt)
+      );
       setColors(data.colors ?? {});
       setLoadError(false);
     } catch {
