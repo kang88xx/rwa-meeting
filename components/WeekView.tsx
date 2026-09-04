@@ -411,6 +411,11 @@ export default function WeekView({
                             variant === "full" ? "text-[12px]" : "text-[11px]"
                           }`}
                         >
+                          {room?.mark && (
+                            <span className="mr-0.5" aria-hidden>
+                              {room.mark}
+                            </span>
+                          )}
                           {p.title}
                         </span>
                         <span

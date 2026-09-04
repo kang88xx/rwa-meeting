@@ -189,7 +189,7 @@ export default function EventModal({
                 >
                   {ROOMS.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name} ({r.capacity}인 · {r.location})
+                      {r.mark} {r.name} ({r.capacity}인 · {r.location})
                     </option>
                   ))}
                 </select>

@@ -249,6 +249,9 @@ export default function CalendarApp() {
                         className="sr-only"
                       />
                       <span className="flex-1 text-sm text-[#3c4043]">
+                        <span className="mr-1" aria-hidden>
+                          {r.mark}
+                        </span>
                         {r.name}
                       </span>
                       <span className="text-[11px] text-[#80868b]">
