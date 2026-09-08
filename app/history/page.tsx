@@ -1,11 +1,20 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { NameColorMap, Reservation } from "@/lib/types";
 import { getRoom } from "@/lib/rooms";
 import { fromDateKey, toDateKey, WEEKDAYS_KO } from "@/lib/date";
+import styles from "./history.module.css";
 
 type Filter = "all" | "upcoming" | "past" | "deleted";
+
+const filters: [Filter, string][] = [
+  ["all", "전체"],
+  ["upcoming", "예정"],
+  ["past", "지난 예약"],
+  ["deleted", "삭제"],
+];
 
 function formatDate(key: string): string {
   const d = fromDateKey(key);
@@ -14,17 +23,12 @@ function formatDate(key: string): string {
 
 function formatCreated(iso: string): string {
   const d = new Date(iso);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(
-    d.getDate()
-  ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes()
-  ).padStart(2, "0")}`;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-// 예약의 종료 시각을 Date로 (지남/예정 판정용)
-function endAt(r: Reservation): number {
-  const d = fromDateKey(r.date);
-  const [h, m] = r.end.split(":").map(Number);
+function endAt(reservation: Reservation): number {
+  const d = fromDateKey(reservation.date);
+  const [h, m] = reservation.end.split(":").map(Number);
   d.setHours(h, m, 0, 0);
   return d.getTime();
 }
@@ -61,36 +65,33 @@ export default function HistoryPage() {
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return reservations
-      .filter((r) => {
-        // 삭제된 예약은 "전체"와 "삭제" 탭에서만 표시
-        if (r.deletedAt) {
+      .filter((reservation) => {
+        if (reservation.deletedAt) {
           if (filter === "upcoming" || filter === "past") return false;
         } else if (filter === "deleted") {
           return false;
         }
-        if (filter === "upcoming" && endAt(r) < now) return false;
-        if (filter === "past" && endAt(r) >= now) return false;
+        if (filter === "upcoming" && endAt(reservation) < now) return false;
+        if (filter === "past" && endAt(reservation) >= now) return false;
         if (!q) return true;
         return (
-          r.title.toLowerCase().includes(q) ||
-          r.organizer.toLowerCase().includes(q) ||
-          (r.note ?? "").toLowerCase().includes(q)
+          reservation.title.toLowerCase().includes(q) ||
+          reservation.organizer.toLowerCase().includes(q) ||
+          (reservation.note ?? "").toLowerCase().includes(q)
         );
       })
-      // 최신 일정이 위로 (날짜 → 시작시간 내림차순)
       .sort((a, b) => {
         if (a.date !== b.date) return a.date < b.date ? 1 : -1;
         return a.start < b.start ? 1 : -1;
       });
   }, [reservations, filter, query, now]);
 
-  // 날짜별 그룹핑
   const groups = useMemo(() => {
     const map = new Map<string, Reservation[]>();
-    for (const r of rows) {
-      const arr = map.get(r.date) ?? [];
-      arr.push(r);
-      map.set(r.date, arr);
+    for (const reservation of rows) {
+      const items = map.get(reservation.date) ?? [];
+      items.push(reservation);
+      map.set(reservation.date, items);
     }
     return Array.from(map.entries());
   }, [rows]);
@@ -98,162 +99,99 @@ export default function HistoryPage() {
   const todayKey = now ? toDateKey(new Date(now)) : "";
 
   return (
-    <div className="flex h-full flex-col bg-white text-[#3c4043]">
-      {/* 상단 앱 바 */}
-      <header className="flex items-center gap-2 border-b border-[#dadce0] px-4 py-2.5 sm:gap-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1a73e8] text-lg text-white">
-            🗂️
-          </div>
-          <h1 className="hidden text-lg font-normal text-[#5f6368] sm:block">
-            예약 히스토리
-          </h1>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.brand}>
+          <Image className={styles.logo} src="/company-logo.svg" alt="Realworlds" width={132} height={24} priority />
+          <h1>예약 내역</h1>
         </div>
-
-        <a
-          href="/"
-          className="shrink-0 rounded-md border border-[#dadce0] px-3 py-1.5 text-sm font-medium text-[#3c4043] hover:bg-[#f1f3f4] sm:ml-2 sm:px-4"
-        >
-          ← 캘린더로
-        </a>
-
-        <div className="ml-auto flex min-w-0 items-center gap-2">
+        <a href="/" className={styles.backLink}>캘린더로</a>
+        <div className={styles.searchWrap}>
+          <label htmlFor="history-search" className={styles.visuallyHidden}>예약 내역 검색</label>
           <input
+            id="history-search"
+            type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="제목·예약자·메모 검색"
-            className="w-full min-w-0 rounded-full border border-[#dadce0] px-4 py-1.5 text-sm outline-none focus:border-[#1a73e8] sm:w-56"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="제목, 예약자, 메모 검색"
+            className={styles.search}
           />
         </div>
       </header>
 
-      {/* 필터 탭 */}
-      <div className="flex items-center gap-2 border-b border-[#f1f3f4] px-4 py-2">
-        {(
-          [
-            ["all", "전체"],
-            ["upcoming", "예정"],
-            ["past", "지난"],
-            ["deleted", "삭제"],
-          ] as [Filter, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              filter === key
-                ? "bg-[#e8f0fe] text-[#1a73e8]"
-                : "text-[#5f6368] hover:bg-[#f1f3f4]"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-        <span className="ml-auto text-sm text-[#80868b]">
-          {rows.length}건
-        </span>
+      <div className={styles.filterBar}>
+        <div className={styles.filters} aria-label="예약 상태 필터">
+          {filters.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              className={filter === key ? styles.filterActive : styles.filter}
+              aria-pressed={filter === key}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className={styles.count} aria-live="polite">{rows.length}건</span>
       </div>
 
-      {/* 목록 */}
-      <main className="flex-1 overflow-auto">
+      <main className={styles.main}>
         {loadError && (
-          <div className="flex items-center gap-3 border-b border-[#fad2cf] bg-[#fce8e6] px-4 py-2 text-sm text-[#c5221f]">
-            예약 정보를 불러오지 못했습니다.
-            <button
-              onClick={() => {
-                setLoading(true);
-                load();
-              }}
-              className="rounded-md border border-[#c5221f] px-2.5 py-0.5 text-xs font-medium hover:bg-[#fad2cf]"
-            >
-              다시 시도
-            </button>
+          <div className={styles.loadError} role="alert">
+            <span>예약 정보를 불러오지 못했습니다.</span>
+            <button type="button" onClick={() => { setLoading(true); load(); }}>다시 시도</button>
           </div>
         )}
+
         {loading ? (
-          <div className="flex h-full items-center justify-center text-sm text-[#5f6368]">
-            불러오는 중…
-          </div>
+          <div className={styles.centerMessage}>불러오는 중…</div>
         ) : rows.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-[#5f6368]">
-            <span className="text-4xl">🗒️</span>
-            <p className="text-sm">표시할 예약이 없습니다.</p>
+          <div className={styles.centerMessage}>
+            <strong>표시할 예약이 없습니다.</strong>
+            <span>검색어나 상태 필터를 바꿔보세요.</span>
           </div>
         ) : (
-          <div className="mx-auto max-w-3xl px-4 py-5">
+          <div className={styles.listWrap}>
             {groups.map(([date, items]) => (
-              <section key={date} className="mb-6">
-                <div className="sticky top-0 z-10 -mx-2 mb-2 flex items-center gap-2 bg-white/90 px-2 py-1 backdrop-blur">
-                  <h2 className="text-sm font-medium text-[#3c4043]">
-                    {formatDate(date)}
-                  </h2>
-                  {date === todayKey && (
-                    <span className="rounded-full bg-[#e6f4ea] px-2 py-0.5 text-[11px] font-medium text-[#188038]">
-                      오늘
-                    </span>
-                  )}
+              <section key={date} className={styles.group}>
+                <div className={styles.dateHeading}>
+                  <h2>{formatDate(date)}</h2>
+                  {date === todayKey && <span className={styles.todayBadge}>오늘</span>}
                 </div>
 
-                <ul className="space-y-2">
-                  {items.map((r) => {
-                    const room = getRoom(r.roomId);
-                    const past = endAt(r) < now;
+                <ul className={styles.list}>
+                  {items.map((reservation) => {
+                    const room = getRoom(reservation.roomId);
+                    const past = endAt(reservation) < now;
                     return (
-                      <li
-                        key={r.id}
-                        className={`flex items-stretch gap-3 rounded-lg border border-[#e0e0e0] p-3 ${
-                          r.deletedAt || past ? "opacity-70" : ""
-                        }`}
-                      >
+                      <li key={reservation.id} className={`${styles.card} ${reservation.deletedAt || past ? styles.cardMuted : ""}`}>
                         <span
-                          className="w-1 shrink-0 rounded-full"
-                          style={{
-                            background:
-                              colors[r.organizer]?.border ??
-                              room?.border ??
-                              "#5f6368",
-                          }}
+                          className={styles.cardAccent}
+                          style={{ background: colors[reservation.organizer]?.border ?? room?.border ?? "#5f6368" }}
+                          aria-hidden="true"
                         />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="truncate text-[15px] font-medium text-[#3c4043]">
-                              {r.title}
-                            </h3>
-                            {r.deletedAt ? (
-                              <span className="shrink-0 rounded-full bg-[#fce8e6] px-2 py-0.5 text-[11px] font-medium text-[#c5221f]">
-                                삭제됨
-                              </span>
+                        <div className={styles.cardBody}>
+                          <div className={styles.cardTitleRow}>
+                            <h3>{reservation.title}</h3>
+                            {reservation.deletedAt ? (
+                              <span className={styles.deletedBadge}>삭제됨</span>
                             ) : past ? (
-                              <span className="shrink-0 rounded-full bg-[#f1f3f4] px-2 py-0.5 text-[11px] text-[#80868b]">
-                                지남
-                              </span>
+                              <span className={styles.pastBadge}>지남</span>
                             ) : (
-                              <span className="shrink-0 rounded-full bg-[#e8f0fe] px-2 py-0.5 text-[11px] font-medium text-[#1a73e8]">
-                                예정
-                              </span>
+                              <span className={styles.upcomingBadge}>예정</span>
                             )}
                           </div>
-                          <p className="mt-0.5 text-sm text-[#5f6368]">
-                            {r.start}~{r.end} · {room?.name ?? "삭제된 회의실"} ·{" "}
-                            <span className="font-medium text-[#3c4043]">
-                              {r.organizer}
-                            </span>
+                          <p className={styles.metadata}>
+                            <strong>{reservation.start}–{reservation.end}</strong>
+                            <span>{room?.name ?? "삭제된 회의실"}</span>
+                            <span>{reservation.organizer}</span>
                           </p>
-                          {r.note && (
-                            <p className="mt-1 truncate text-[13px] text-[#80868b]">
-                              📝 {r.note}
-                            </p>
-                          )}
+                          {reservation.note && <p className={styles.note}>{reservation.note}</p>}
                         </div>
-                        <div className="hidden shrink-0 flex-col items-end justify-center text-right sm:flex">
-                          <span className="text-[11px] text-[#80868b]">
-                            등록 {formatCreated(r.createdAt)}
-                          </span>
-                          {r.deletedAt && (
-                            <span className="text-[11px] text-[#c5221f]">
-                              삭제 {formatCreated(r.deletedAt)}
-                            </span>
-                          )}
+                        <div className={styles.timestamps}>
+                          <span>등록 {formatCreated(reservation.createdAt)}</span>
+                          {reservation.deletedAt && <span className={styles.deletedTime}>삭제 {formatCreated(reservation.deletedAt)}</span>}
                         </div>
                       </li>
                     );

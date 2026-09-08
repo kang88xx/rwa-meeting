@@ -1,0 +1,41 @@
+.backdrop { position:fixed; inset:0; z-index:40; background:transparent; }
+.dialog { --event-accent:#5f6368; position:fixed; z-index:50; display:flex; width:352px; max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); flex-direction:column; overflow:hidden; border:1px solid #dfe3e8; border-radius:16px; background:#fff; box-shadow:0 20px 55px rgba(15,23,42,.18),0 5px 15px rgba(15,23,42,.08); animation:popoverIn 150ms cubic-bezier(.2,.8,.2,1); }
+.handle { display:none; }
+.headingRow { flex-shrink:0; display:flex; align-items:flex-start; gap:12px; padding:18px 18px 14px; }
+.colorBar { width:4px; height:42px; flex:0 0 auto; border-radius:999px; background:var(--event-accent); }
+.headingText { min-width:0; flex:1; }
+.titleLine { display:flex; align-items:center; gap:7px; }
+.heading { min-width:0; margin:0; overflow-wrap:anywhere; color:#18202c; font-size:17px; font-weight:750; line-height:1.35; letter-spacing:-.02em; }
+.schedule { margin:4px 0 0; color:#687383; font-size:13px; line-height:1.45; }
+.closeButton { min-height:36px; flex:0 0 auto; border:0; border-radius:8px; background:transparent; padding:0 8px; color:#606a78; font-size:13px; font-weight:650; }
+.closeButton:hover,.secondaryButton:hover { background:#f3f6f9; }
+.details { display:grid; gap:0; min-height:0; margin:0; overflow-y:auto; overscroll-behavior:contain; border-top:1px solid #edf0f3; padding:6px 18px; }
+.detailRow { display:grid; grid-template-columns:58px minmax(0,1fr); gap:12px; padding:9px 0; color:#303a48; font-size:14px; line-height:1.55; }
+.detailRow dt { color:#7a8491; font-size:12px; font-weight:650; }
+.detailRow dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+.note { white-space:pre-wrap; }
+.error { margin:0 18px 10px; border:1px solid #f4c7c3; border-radius:9px; background:#fff3f2; padding:9px 11px; color:#b3261e; font-size:12px; line-height:1.45; }
+.actions { flex-shrink:0; display:flex; min-height:60px; align-items:center; justify-content:flex-end; gap:8px; border-top:1px solid #edf0f3; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
+.confirmText { margin-right:auto; color:#606a78; font-size:12px; }
+.editButton,.cancelButton,.secondaryButton,.dangerButton { min-height:38px; border-radius:9px; padding:0 13px; font-size:13px; font-weight:700; }
+.editButton { border:1px solid #b8d2f7; background:#fff; color:#1769e0; }
+.editButton:hover { background:#f2f7ff; }
+.cancelButton { border:1px solid transparent; background:#fff; color:#b3261e; }
+.cancelButton:hover { background:#fff3f2; }
+.secondaryButton { border:1px solid transparent; background:#fff; color:#536071; }
+.dangerButton { border:1px solid #c7332b; background:#c7332b; color:#fff; }
+.dangerButton:disabled { cursor:wait; opacity:.6; }
+.closeButton:focus-visible,.editButton:focus-visible,.cancelButton:focus-visible,.secondaryButton:focus-visible,.dangerButton:focus-visible { outline:3px solid rgba(23,105,224,.23); outline-offset:2px; }
+@media (max-width:640px) {
+  .backdrop { background:rgba(16,24,40,.4); backdrop-filter:blur(2px); }
+  .dialog { right:0 !important; bottom:0; left:0 !important; top:auto !important; width:100%; max-width:none; max-height:min(78dvh,680px); border-right:0; border-bottom:0; border-left:0; border-radius:20px 20px 0 0; animation:sheetIn 180ms cubic-bezier(.2,.8,.2,1); }
+  .handle { display:block; width:38px; height:4px; flex:0 0 auto; margin:9px auto 0; border-radius:999px; background:#cbd1d8; }
+  .headingRow { padding:14px 18px; }
+  .details { padding-right:18px; padding-left:18px; }
+  .detailRow { grid-template-columns:62px minmax(0,1fr); padding:11px 0; font-size:15px; }
+  .actions { min-height:68px; padding-right:18px; padding-left:18px; }
+  .editButton,.cancelButton,.secondaryButton,.dangerButton { min-height:44px; font-size:14px; }
+}
+@media (prefers-reduced-motion:reduce) { .dialog { animation:none; } }
+@keyframes popoverIn { from { opacity:0; transform:translateY(7px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes sheetIn { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }

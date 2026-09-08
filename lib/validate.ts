@@ -65,7 +65,7 @@ export function validateReservationBody(
     return { ok: false, error: `제목은 ${MAX_TITLE}자 이내로 입력하세요.` };
   if (note.length > MAX_NOTE)
     return { ok: false, error: `메모는 ${MAX_NOTE}자 이내로 입력하세요.` };
-  if (!ROOM_MAP[roomId]) return { ok: false, error: "회의실을 선택하세요." };
+  if (!Object.hasOwn(ROOM_MAP, roomId)) return { ok: false, error: "회의실을 선택하세요." };
   if (!isRealDate(date))
     return { ok: false, error: "날짜 형식이 올바르지 않습니다." };
   if (!isRealTime(start) || !isRealTime(end))
