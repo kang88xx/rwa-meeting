@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NameColorMap, Reservation } from "@/lib/types";
 import { getRoom } from "@/lib/rooms";
-import { oklchHue } from "@/lib/palette";
 import {
   WEEKDAYS_KO,
   isToday,
@@ -17,9 +16,10 @@ import {
   END_HOUR,
   SNAP_MINUTES as SNAP,
 } from "@/lib/validate";
+import styles from "./WeekView.module.css";
 
 export { START_HOUR, END_HOUR };
-export const HOUR_HEIGHT = 52; // px
+export const HOUR_HEIGHT = 80; // px
 
 type Selection = { key: string; startMin: number; endMin: number };
 
@@ -116,15 +116,16 @@ function CurrentTimeLine() {
   const top = ((minutes - START_HOUR * 60) / 60) * HOUR_HEIGHT;
   return (
     <div
-      className="pointer-events-none absolute left-0 right-0 z-20"
+      className={styles.currentTime}
       style={{ top }}
     >
-      <div className="relative">
-        <div className="absolute -left-1 -top-[5px] h-2.5 w-2.5 rounded-full bg-[#ea4335]" />
-        <div className="h-[2px] w-full bg-[#ea4335]" />
-      </div>
+      <span className={styles.currentTimeDot} />
     </div>
   );
+}
+
+function displayRoomName(name: string | undefined): string {
+  return name?.replace(/^\s*\d+F\s*/i, "") || "회의실";
 }
 
 export default function WeekView({
@@ -150,9 +151,9 @@ export default function WeekView({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    // 오전 8시 근처로 초기 스크롤
+    // 오전 8시가 첫 줄에 오도록 초기 스크롤
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = Math.max(0, HOUR_HEIGHT * 1.5);
+      scrollRef.current.scrollTop = HOUR_HEIGHT - 12;
     }
   }, []);
 
@@ -263,59 +264,52 @@ export default function WeekView({
     window.addEventListener("pointercancel", cancel);
   };
 
+  const gridTemplateColumns = `72px repeat(${days.length}, minmax(0, 1fr))`;
+
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className={styles.weekView}>
       {/* 요일 헤더 */}
-      <div className="flex border-b border-[#dadce0] pr-[12px]">
-        <div className="w-10 shrink-0 sm:w-14" />
+      <div className={styles.headerScrollGuard}>
+        <div className={styles.header} style={{ gridTemplateColumns }}>
+          <div className={styles.timeHeader} />
         {days.map((d) => {
           const today = isToday(d);
           return (
             <div
               key={toDateKey(d)}
-              className="flex flex-1 flex-col items-center py-2"
+              className={`${styles.dayHeader} ${today ? styles.todayHeader : ""}`}
             >
               <span
-                className={`text-[11px] font-medium uppercase ${
-                  d.getDay() === 0 ? "text-[#d93025]" : "text-[#70757a]"
-                }`}
+                className={`${styles.weekday} ${d.getDay() === 0 ? styles.sunday : ""}`}
               >
                 {WEEKDAYS_KO[d.getDay()]}
               </span>
               <span
-                className={`mt-1 flex h-8 w-8 items-center justify-center rounded-full text-[17px] leading-none sm:h-9 sm:w-9 sm:text-[22px] ${
-                  today
-                    ? "bg-[#1a73e8] font-normal text-white"
-                    : "text-[#3c4043]"
-                }`}
+                className={`${styles.dateNumber} ${today ? styles.todayNumber : ""}`}
               >
                 {d.getDate()}
               </span>
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* 스크롤 본문 */}
-      <div ref={scrollRef} className="gc-scroll flex-1 overflow-y-auto">
-        <div className="flex" style={{ height: bodyHeight }}>
+      <div ref={scrollRef} className={`gc-scroll ${styles.scrollBody}`}>
+        <div className={styles.timeline} style={{ height: bodyHeight, gridTemplateColumns }}>
           {/* 시간 눈금 */}
-          <div className="w-10 shrink-0 sm:w-14">
+          <div className={styles.timeGutter}>
             {hours.map((h, i) => (
-              <div key={h} className="relative" style={{ height: HOUR_HEIGHT }}>
-                {i > 0 && (
-                  <span className="absolute -top-2 right-1 text-[10px] text-[#70757a] sm:right-2">
-                    <span className="sm:hidden">{h}시</span>
-                    <span className="hidden sm:inline">
-                      {h < 12
-                        ? `오전 ${h}시`
-                        : h === 12
-                          ? "오후 12시"
-                          : `오후 ${h - 12}시`}
-                    </span>
-                  </span>
-                )}
-              </div>
+              i > 0 ? (
+                <span
+                  key={h}
+                  className={styles.timeLabel}
+                  style={{ top: (h - START_HOUR) * HOUR_HEIGHT }}
+                >
+                  {String(h).padStart(2, "0")}:00
+                </span>
+              ) : null
             ))}
           </div>
 
@@ -328,14 +322,14 @@ export default function WeekView({
               <div
                 key={key}
                 onPointerDown={(e) => handleColumnPointerDown(e, d, key)}
-                className="relative flex-1 select-none border-l border-[#dadce0]"
+                className={`${styles.dayColumn} ${today ? styles.todayColumn : ""}`}
               >
                 {/* 시간 가로줄 */}
                 {hours.map((h) => (
                   <div
                     key={h}
-                    className="border-b border-[#dadce0]"
-                    style={{ height: HOUR_HEIGHT }}
+                    className={styles.hourLine}
+                    style={{ top: (h - START_HOUR) * HOUR_HEIGHT }}
                   />
                 ))}
 
@@ -350,13 +344,13 @@ export default function WeekView({
                   if (!hl || hl.endMin <= hl.startMin) return null;
                   return (
                     <div
-                      className="pointer-events-none absolute left-0.5 right-0.5 z-10 rounded-md border border-[#1a73e8] bg-[#1a73e8]/15"
+                      className={styles.selection}
                       style={{
                         top: ((hl.startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT,
                         height: ((hl.endMin - hl.startMin) / 60) * HOUR_HEIGHT,
                       }}
                     >
-                      <span className="absolute left-1.5 top-0.5 text-[11px] font-medium text-[#1a73e8]">
+                      <span className={styles.selectionTime}>
                         {minutesToTime(hl.startMin)}–{minutesToTime(hl.endMin)}
                       </span>
                     </div>
@@ -365,17 +359,17 @@ export default function WeekView({
 
                 {today && <CurrentTimeLine />}
 
-                {/* 예약 블록 — 듀오톤 (진한 헤더: 제목+시간 / 파스텔 본문: 장소·예약자) */}
+                {/* 예약 블록 — 같은 시간의 회의실 예약은 실제 시간 좌표에서 나란히 표시 */}
                 {positioned.map((p) => {
                   const room = getRoom(p.roomId);
-                  // 예약자 이름 색상 우선, 없으면 회의실 색상으로 폴백
                   const nc = colors[p.organizer];
-                  const h = oklchHue(nc?.border ?? room?.border ?? "#5f6368");
-                  const gap = 2;
+                  const accent = nc?.border ?? room?.border ?? "#5f6368";
+                  const background = nc?.bg ?? room?.color ?? "#f1f3f4";
+                  const roomName = displayRoomName(room?.name);
+                  const gap = 3;
                   const widthPct = 100 / p.cols;
-                  // 높이별 3단계: full(헤더+장소/예약자 2줄), compact(헤더+한 줄), mini(헤더만)
-                  const variant =
-                    p.height >= 68 ? "full" : p.height >= 34 ? "compact" : "mini";
+                  const isShort = p.height <= HOUR_HEIGHT / 2;
+                  const isNarrow = p.cols > 1;
                   return (
                     <button
                       key={p.id}
@@ -384,79 +378,28 @@ export default function WeekView({
                         e.stopPropagation();
                         onEventClick(p, e.currentTarget);
                       }}
-                      className="group absolute flex flex-col overflow-hidden text-left transition-[filter] hover:z-10 hover:brightness-[1.04]"
+                      className={`${styles.event} ${isShort ? styles.shortEvent : ""} ${isNarrow ? styles.narrowEvent : ""}`}
                       style={{
                         top: p.top,
                         height: p.height - 1,
-                        left: `calc(${p.col * widthPct}% + 1px)`,
+                        left: `calc(${p.col * widthPct}% + ${p.col === 0 ? 3 : 1}px)`,
                         width: `calc(${widthPct}% - ${gap + 1}px)`,
-                        borderRadius: variant === "mini" ? 6 : 8,
-                        background: `oklch(0.96 0.03 ${h})`,
-                        boxShadow: `0 2px 6px oklch(0.62 0.11 ${h} / 0.2)`,
+                        borderLeftColor: accent,
+                        background,
                       }}
-                      title={`${p.title} · ${p.start}~${p.end} · ${room?.name ?? ""} · ${p.organizer}`}
+                      title={`${p.title} · ${p.start}~${p.end} · ${room?.name ?? roomName} · ${p.organizer}`}
+                      aria-label={`${p.title}, ${p.start}부터 ${p.end}, ${room?.name ?? roomName}, 예약자 ${p.organizer}`}
                     >
-                      <div
-                        className={`flex items-center justify-between gap-1 px-1.5 text-white ${
-                          variant === "mini"
-                            ? "flex-1"
-                            : variant === "compact"
-                              ? "py-[3px]"
-                              : "py-1"
-                        }`}
-                        style={{ background: `oklch(0.55 0.11 ${h})` }}
-                      >
-                        <span
-                          className={`min-w-0 truncate font-bold leading-tight ${
-                            variant === "full" ? "text-[12px]" : "text-[11px]"
-                          }`}
-                        >
-                          {room?.mark && (
-                            <span className="mr-0.5" aria-hidden>
-                              {room.mark}
-                            </span>
-                          )}
-                          {p.title}
+                      {isShort ? (
+                        <span className={styles.shortHeading}>
+                          <span className={styles.shortRoom} title={roomName}>{p.roomId === "main" ? "대" : p.roomId === "small" ? "소" : "방"}</span>
+                          <span className={styles.eventTitle}>{p.title}</span>
                         </span>
-                        <span
-                          className={`shrink-0 whitespace-nowrap font-semibold leading-tight opacity-90 ${
-                            variant === "full" ? "text-[10px]" : "text-[9px]"
-                          }`}
-                        >
-                          {variant === "mini"
-                            ? minutesToTime(timeToMinutes(p.start))
-                            : `${p.start}~${p.end}`}
-                        </span>
-                      </div>
-                      {variant === "full" && (
-                        <div className="flex min-h-0 flex-1 flex-col gap-px px-1.5 py-1">
-                          <span
-                            className="truncate text-[11px] leading-tight"
-                            style={{ color: `oklch(0.45 0.08 ${h})` }}
-                          >
-                            {room?.name}
-                          </span>
-                          <span
-                            className="truncate text-[11px] font-semibold leading-tight"
-                            style={{ color: `oklch(0.40 0.10 ${h})` }}
-                          >
-                            {p.organizer}
-                          </span>
-                        </div>
-                      )}
-                      {variant === "compact" && (
-                        <div
-                          className="truncate px-1.5 py-[3px] text-[10px] leading-tight"
-                          style={{ color: `oklch(0.45 0.08 ${h})` }}
-                        >
-                          {room?.name} ·{" "}
-                          <span
-                            className="font-semibold"
-                            style={{ color: `oklch(0.40 0.10 ${h})` }}
-                          >
-                            {p.organizer}
-                          </span>
-                        </div>
+                      ) : <span className={styles.eventTitle}>{p.title}</span>}
+                      <span className={styles.eventTime}>{p.start}–<wbr />{p.end}</span>
+                      {!isShort && <span className={styles.eventRoom}>{roomName}</span>}
+                      {p.height >= 100 && !isNarrow && (
+                        <span className={styles.eventOrganizer}>{p.organizer}</span>
                       )}
                     </button>
                   );

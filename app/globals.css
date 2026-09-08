@@ -2,10 +2,10 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #202124;
-  --border: #dadce0;
-  --muted: #5f6368;
-  --hover: #f1f3f4;
+  --foreground: #20242a;
+  --border: #e5e8ed;
+  --muted: #69717e;
+  --hover: #f7f8fa;
   --today: #1a73e8;
 }
 
@@ -14,7 +14,7 @@
   --color-foreground: var(--foreground);
   --color-border: var(--border);
   --color-muted: var(--muted);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
 html,
@@ -25,8 +25,19 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), "Google Sans", Roboto, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 3px;
+}
+::selection { background: #d9e8ff; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
 /* 스크롤바 (구글 캘린더 느낌) */

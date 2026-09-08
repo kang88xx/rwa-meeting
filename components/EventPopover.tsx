@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import { NameColor, Reservation } from "@/lib/types";
 import { getRoom } from "@/lib/rooms";
 import { fromDateKey, WEEKDAYS_KO } from "@/lib/date";
+import styles from "./EventPopover.module.css";
 
 type Props = {
   reservation: Reservation;
-  // 예약자 이름 색상 (없으면 회의실 색상으로 폴백)
   color?: NameColor;
   anchor: DOMRect;
   onClose: () => void;
@@ -15,51 +15,98 @@ type Props = {
   onEdit: (r: Reservation) => void;
 };
 
+const focusableSelector = [
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[href]",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
 function formatDate(key: string): string {
   const d = fromDateKey(key);
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS_KO[d.getDay()]})`;
 }
 
-export default function EventPopover({
-  reservation,
-  color,
-  anchor,
-  onClose,
-  onDeleted,
-  onEdit,
-}: Props) {
+export default function EventPopover({ reservation, color, anchor, onClose, onDeleted, onEdit }: Props) {
   const room = getRoom(reservation.roomId);
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const initialFocusRef = useRef<HTMLButtonElement>(null);
   const [deleting, setDeleting] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const frame = requestAnimationFrame(() => initialFocusRef.current?.focus());
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => element.offsetParent !== null);
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
   }, [onClose]);
 
-  // 앵커 기준 위치 계산 (화면 밖으로 나가지 않도록 보정)
-  const W = 320;
-  let left = anchor.right + 8;
-  if (left + W > window.innerWidth - 8) {
-    left = Math.max(8, anchor.left - W - 8);
-  }
-  let top = anchor.top;
-  const H = 220;
-  if (top + H > window.innerHeight - 8) {
-    top = Math.max(8, window.innerHeight - H - 8);
-  }
+  const [position, setPosition] = useState({ left: 12, top: 12 });
+
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const updatePosition = () => {
+      const width = dialog.offsetWidth;
+      const height = dialog.offsetHeight;
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = window.innerHeight;
+      const preferredLeft = anchor.right + 10;
+      const left = preferredLeft + width <= viewportWidth - 12
+        ? preferredLeft
+        : anchor.left - width - 10;
+      const next = {
+        left: Math.max(12, Math.min(left, viewportWidth - width - 12)),
+        top: Math.max(12, Math.min(anchor.top, viewportHeight - height - 12)),
+      };
+      setPosition(previous => previous.left === next.left && previous.top === next.top ? previous : next);
+    };
+    updatePosition();
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(dialog);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [anchor]);
 
   const del = async () => {
     setDeleting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/reservations/${reservation.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/reservations/${reservation.id}`, { method: "DELETE" });
       if (res.ok) {
         onDeleted();
       } else {
@@ -75,88 +122,54 @@ export default function EventPopover({
 
   return (
     <>
-      <div className="fixed inset-0 z-40" onMouseDown={onClose} />
+      <div className={styles.backdrop} onMouseDown={onClose} aria-hidden="true" />
       <div
-        className="gc-pop fixed z-50 w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5"
-        style={{ left, top }}
-        onMouseDown={(e) => e.stopPropagation()}
+        ref={dialogRef}
+        className={styles.dialog}
+        style={{
+          left: position.left,
+          top: position.top,
+          "--event-accent": color?.border ?? room?.border ?? "#5f6368",
+        } as React.CSSProperties}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
       >
-        <div className="flex items-start justify-between px-4 pt-3">
-          <div className="flex items-start gap-3">
-            <span
-              className="mt-1.5 h-3.5 w-3.5 shrink-0 rounded-sm"
-              style={{ background: color?.border ?? room?.border ?? "#5f6368" }}
-            />
-            <div>
-              <h3 className="text-base font-medium leading-tight text-[#3c4043]">
-                {reservation.title}
-              </h3>
-              <p className="mt-0.5 text-sm text-[#5f6368]">
-                {formatDate(reservation.date)} · {reservation.start}~
-                {reservation.end}
-              </p>
+        <div className={styles.handle} aria-hidden="true" />
+        <div className={styles.headingRow}>
+          <span className={styles.colorBar} aria-hidden="true" />
+          <div className={styles.headingText}>
+            <div className={styles.titleLine}>
+              <h3 id={titleId} className={styles.heading}>{reservation.title}</h3>
             </div>
+            <p className={styles.schedule}>
+              {formatDate(reservation.date)} · {reservation.start}–{reservation.end}
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="h-8 w-8 shrink-0 rounded-full text-[#5f6368] hover:bg-[#f1f3f4]"
-            aria-label="닫기"
-          >
-            ✕
-          </button>
+          <button ref={initialFocusRef} type="button" onClick={onClose} className={styles.closeButton}>닫기</button>
         </div>
 
-        <div className="space-y-2 px-4 py-3 text-sm text-[#3c4043]">
-          <Row icon="📍">
-            {room?.name}{" "}
-            <span className="text-[#5f6368]">
-              ({room?.capacity}인 · {room?.location})
-            </span>
-          </Row>
-          <Row icon="👤">
-            예약자 <span className="font-medium">{reservation.organizer}</span>
-          </Row>
-          {reservation.note && <Row icon="📝">{reservation.note}</Row>}
-        </div>
+        <dl className={styles.details}>
+          <Detail label="회의실">{room?.name ?? "삭제된 회의실"}</Detail>
+          <Detail label="예약자"><strong>{reservation.organizer}</strong></Detail>
+          {reservation.note && <Detail label="메모"><span className={styles.note}>{reservation.note}</span></Detail>}
+        </dl>
 
-        {error && (
-          <div className="mx-4 mb-2 rounded-md bg-[#fce8e6] px-3 py-2 text-xs text-[#c5221f]">
-            {error}
-          </div>
-        )}
+        {error && <div role="alert" className={styles.error}>{error}</div>}
 
-        <div className="flex items-center justify-end gap-2 border-t border-[#f1f3f4] px-4 py-2.5">
+        <div className={styles.actions}>
           {confirm ? (
             <>
-              <span className="mr-auto text-xs text-[#5f6368]">삭제할까요?</span>
-              <button
-                onClick={() => setConfirm(false)}
-                className="rounded-md px-3 py-1.5 text-sm text-[#5f6368] hover:bg-[#f1f3f4]"
-              >
-                취소
-              </button>
-              <button
-                onClick={del}
-                disabled={deleting}
-                className="rounded-md bg-[#d93025] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#c5221f] disabled:opacity-60"
-              >
+              <span className={styles.confirmText} aria-live="polite">이 예약을 삭제할까요?</span>
+              <button type="button" onClick={() => setConfirm(false)} className={styles.secondaryButton}>돌아가기</button>
+              <button type="button" onClick={del} disabled={deleting} className={styles.dangerButton}>
                 {deleting ? "삭제 중…" : "삭제"}
               </button>
             </>
           ) : (
             <>
-              <button
-                onClick={() => onEdit(reservation)}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-[#1a73e8] hover:bg-[#e8f0fe]"
-              >
-                수정
-              </button>
-              <button
-                onClick={() => setConfirm(true)}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-[#d93025] hover:bg-[#fce8e6]"
-              >
-                예약 취소
-              </button>
+              <button type="button" onClick={() => onEdit(reservation)} className={styles.editButton}>수정</button>
+              <button type="button" onClick={() => setConfirm(true)} className={styles.cancelButton}>예약 취소</button>
             </>
           )}
         </div>
@@ -165,13 +178,6 @@ export default function EventPopover({
   );
 }
 
-function Row({ icon, children }: { icon: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <span className="w-4 shrink-0 text-center text-[13px] leading-5 opacity-70">
-        {icon}
-      </span>
-      <span className="leading-5">{children}</span>
-    </div>
-  );
+function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div className={styles.detailRow}><dt>{label}</dt><dd>{children}</dd></div>;
 }

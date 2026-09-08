@@ -1,0 +1,334 @@
+.agenda {
+  min-width: 0;
+  background: #ffffff;
+  color: #202124;
+  padding: 0;
+}
+
+.roomTabsSticky {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  padding: 12px 0 8px;
+  background: #fff;
+}
+
+.roomTabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 20px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.roomTab {
+  min-height: 48px;
+  border: 0;
+  border-inline-end: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.roomTab:last-child {
+  border-inline-end: 0;
+}
+
+.roomTab:hover {
+  background: #f8fafc;
+}
+
+.roomTabSelected {
+  background: #eef5ff;
+  color: #1a73e8;
+  font-weight: 700;
+}
+
+.roomTab:focus-visible,
+.reservationRow:focus-visible,
+.freeRow:focus-visible,
+.createButton:focus-visible {
+  position: relative;
+  z-index: 2;
+  outline: 3px solid rgb(26 115 232 / 28%);
+  outline-offset: -3px;
+}
+
+.sectionHeader {
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  color: #202124;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.sectionHeader p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.rows {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.empty {
+  margin: 0;
+  padding: 36px 20px;
+  color: #7a8491;
+  font-size: 14px;
+  text-align: center;
+}
+
+.reservationRow,
+.freeRow {
+  display: grid;
+  grid-template-columns: minmax(104px, 0.85fr) minmax(126px, 1.5fr) auto;
+  align-items: center;
+  width: 100%;
+  min-height: 88px;
+  padding: 14px 20px;
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #202124;
+  font: inherit;
+  text-align: start;
+}
+
+.reservationRow {
+  border-inline-start: 4px solid #5f6368;
+  padding-inline-start: 16px;
+  cursor: pointer;
+}
+
+.reservationRow:hover {
+  filter: brightness(0.985);
+}
+
+.freeRow {
+  cursor: pointer;
+  scroll-margin-bottom: 195px;
+  scroll-margin-top: 65px;
+}
+
+.freeRow:hover:not(:disabled) {
+  background: #f8fbff;
+}
+
+.freeRow:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: default;
+}
+
+.freeRowSelected {
+  border-inline-start: 5px solid #1a73e8;
+  background: #eef5ff;
+  color: #0b57d0;
+  padding-inline-start: 15px;
+}
+
+.time {
+  min-width: 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.reservationDetails,
+.freeDetails {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding-inline: 10px;
+  font-size: 14px;
+  line-height: 1.38;
+}
+
+.reservationDetails strong,
+.freeDetails strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.reservationDetails > span:not(.overlapNote),
+.freeDetails span {
+  color: #6b7280;
+}
+
+.overlapNote {
+  margin-top: 2px;
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.status {
+  justify-self: end;
+  color: #6b7280;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.selectAction {
+  display: inline-flex;
+  min-width: 64px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  border: 1px solid #1a73e8;
+  border-radius: 8px;
+  color: #1a73e8;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.freeRow:disabled .selectAction {
+  min-width: 0;
+  border: 0;
+}
+
+.freeRowSelected .selectAction {
+  border-color: #1a73e8;
+  background: #1a73e8;
+  color: #ffffff;
+}
+
+.summary {
+  position: sticky;
+  z-index: 10;
+  bottom: 0;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid #d1d5db;
+  background: #ffffff;
+  box-shadow: 0 -8px 24px rgb(31 41 55 / 8%);
+}
+
+.summaryText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.summaryHeading { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.summaryHeading>span { color:#1a73e8;font-size:15px;font-weight:650; }
+.summaryText>span { font-size:12px;color:#727c89; }
+.timeFields { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.timeFields label { display:grid;gap:4px;color:#66707e;font-size:12px; }
+.timeFields select { width:100%;height:44px;padding:0 10px;border:1px solid #d7dfe9;border-radius:7px;background:#fff;color:#242d3a;font-size:16px; }
+.durationPresets { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px; }
+.durationPresets button { min-height:44px;padding:0 4px;border:1px solid #dce2eb;border-radius:7px;background:#fff;color:#596474;font-size:13px;font-weight:550;cursor:pointer; }
+.durationPresets button[aria-pressed="true"] { border-color:#1a73e8;background:#edf5ff;color:#1264cf;font-weight:700; }
+.durationPresets button:disabled { background:#f6f7f9;border-color:#edf0f4;color:#aab1bb;cursor:not-allowed; }
+.durationPresets button:focus-visible,.timeFields select:focus-visible { outline:2px solid #1a73e8;outline-offset:2px; }
+.durationLimit { margin:7px 0 10px;color:#7a8390;font-size:11px;line-height:1.5; }
+
+.picker .roomTabsSticky { position:static;padding-top:0; }
+.picker .summary { position:static;border-top:0;box-shadow:none;padding-top:6px; }
+.pickerEmpty { margin:0;padding:18px 20px 26px;font-size:14px;line-height:1.7;color:#69717e; }
+
+.summaryText strong {
+  margin-bottom: 2px;
+  color: #202124;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.createButton {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 10px;
+  background: #1a73e8;
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.createButton:hover {
+  background: #155fc0;
+}
+
+@media (max-width: 380px) {
+  .agenda {
+    padding-top: 0;
+  }
+
+  .roomTabs {
+    margin-inline: 14px;
+  }
+
+  .sectionHeader {
+    padding: 28px 14px 14px;
+  }
+
+  .reservationRow,
+  .freeRow {
+    grid-template-columns: 94px minmax(0, 1fr);
+    min-height: 92px;
+    padding: 12px 14px;
+  }
+
+  .reservationRow {
+    padding-inline-start: 10px;
+  }
+
+  .freeRowSelected {
+    padding-inline-start: 9px;
+  }
+
+  .reservationDetails,
+  .freeDetails {
+    padding-inline: 8px 0;
+  }
+
+  .status,
+  .selectAction {
+    grid-column: 2;
+    justify-self: start;
+    margin: 6px 0 0 8px;
+  }
+
+  .selectAction {
+    min-width: 72px;
+  }
+
+  .summary {
+    padding-inline: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roomTab,
+  .reservationRow,
+  .freeRow,
+  .createButton {
+    scroll-behavior: auto;
+  }
+}

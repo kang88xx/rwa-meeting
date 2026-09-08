@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ROOMS, getRoom } from "@/lib/rooms";
 import { NewReservation } from "@/lib/types";
 import { minutesToTime } from "@/lib/date";
 import { START_HOUR, END_HOUR } from "./WeekView";
 import { MAX_TITLE, MAX_ORGANIZER, MAX_NOTE } from "@/lib/validate";
+import styles from "./EventModal.module.css";
 
 export type ModalPrefill = {
   date: string;
   start: string;
   end: string;
   roomId: string;
-  // 수정 모드: 기존 예약 정보
   id?: string;
   title?: string;
   organizer?: string;
@@ -23,18 +23,25 @@ type Props = {
   prefill: ModalPrefill;
   defaultName: string;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (reservation: NewReservation) => void;
   onNameChange: (name: string) => void;
 };
 
 const STEP = 30;
 const timeOptions = (() => {
   const opts: string[] = [];
-  for (let m = START_HOUR * 60; m <= END_HOUR * 60; m += STEP) {
-    opts.push(minutesToTime(m));
-  }
+  for (let m = START_HOUR * 60; m <= END_HOUR * 60; m += STEP) opts.push(minutesToTime(m));
   return opts;
 })();
+
+const focusableSelector = [
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[href]",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
 
 function labelForTime(t: string): string {
   const [h, m] = t.split(":").map(Number);
@@ -43,18 +50,14 @@ function labelForTime(t: string): string {
   return `${ampm} ${hh}:${String(m).padStart(2, "0")}`;
 }
 
-export default function EventModal({
-  prefill,
-  defaultName,
-  onClose,
-  onCreated,
-  onNameChange,
-}: Props) {
+export default function EventModal({ prefill, defaultName, onClose, onCreated, onNameChange }: Props) {
   const isEdit = Boolean(prefill.id);
+  const titleId = useId();
+  const errorId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const initialFocusRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState(prefill.title ?? "");
-  const [organizer, setOrganizer] = useState(
-    prefill.organizer ?? defaultName
-  );
+  const [organizer, setOrganizer] = useState(prefill.organizer ?? defaultName);
   const [roomId, setRoomId] = useState(prefill.roomId);
   const [date, setDate] = useState(prefill.date);
   const [start, setStart] = useState(prefill.start);
@@ -64,11 +67,9 @@ export default function EventModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // 생성 모드에서만 사이드바 이름 변경을 반영 (수정 모드는 기존 예약자 유지)
     if (!isEdit) setOrganizer(defaultName);
   }, [defaultName, isEdit]);
 
-  // 시작 시간이 종료 이상이면 종료를 자동 보정
   useEffect(() => {
     if (timeOptions.indexOf(end) <= timeOptions.indexOf(start)) {
       const idx = Math.min(timeOptions.indexOf(start) + 1, timeOptions.length - 1);
@@ -78,21 +79,47 @@ export default function EventModal({
   }, [start]);
 
   const room = getRoom(roomId);
-
   const endOptions = useMemo(
     () => timeOptions.filter((t) => timeOptions.indexOf(t) > timeOptions.indexOf(start)),
     [start]
   );
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const frame = requestAnimationFrame(() => initialFocusRef.current?.focus());
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => element.offsetParent !== null);
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
   }, [onClose]);
 
-  const submit = async () => {
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
     setError(null);
     if (!organizer.trim()) {
       setError("예약자 이름을 입력하세요.");
@@ -109,14 +136,11 @@ export default function EventModal({
       note: note.trim() || undefined,
     };
     try {
-      const res = await fetch(
-        isEdit ? `/api/reservations/${prefill.id}` : "/api/reservations",
-        {
-          method: isEdit ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(isEdit ? `/api/reservations/${prefill.id}` : "/api/reservations", {
+        method: isEdit ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "예약에 실패했습니다.");
@@ -124,7 +148,7 @@ export default function EventModal({
         return;
       }
       if (!isEdit) onNameChange(organizer.trim());
-      onCreated();
+      onCreated(payload);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
       setSubmitting(false);
@@ -132,160 +156,97 @@ export default function EventModal({
   };
 
   return (
-    <div
-      className="gc-overlay fixed inset-0 z-50 flex items-start justify-center bg-black/20 p-3 pt-[5vh] sm:p-4 sm:pt-[8vh]"
-      onMouseDown={onClose}
-    >
+    <div className={styles.overlay} onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
       <div
-        className="gc-pop max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white shadow-2xl"
-        onMouseDown={(e) => e.stopPropagation()}
+        ref={dialogRef}
+        className={styles.dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={error ? errorId : undefined}
+        style={{ "--room-accent": room?.border ?? "#1769e0" } as React.CSSProperties}
       >
-        {/* 상단 색상 바 */}
-        <div
-          className="h-1.5 w-full"
-          style={{ background: room?.border ?? "#1a73e8" }}
-        />
-        <div className="px-4 pb-5 pt-4 sm:px-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-medium text-[#3c4043]">
-              {isEdit ? "예약 수정" : "회의실 예약"}
-            </h2>
-            <button
-              onClick={onClose}
-              className="h-8 w-8 rounded-full text-[#5f6368] hover:bg-[#f1f3f4]"
-              aria-label="닫기"
-            >
-              ✕
-            </button>
+        <div className={styles.accent} />
+        <form className={styles.form} onSubmit={submit}>
+          <div className={styles.headingRow}>
+            <div>
+              <p className={styles.eyebrow}>{isEdit ? "예약 정보 변경" : "새 일정"}</p>
+              <h2 id={titleId} className={styles.heading}>{isEdit ? "예약 수정" : "회의실 예약"}</h2>
+            </div>
+            <button type="button" onClick={onClose} className={styles.closeButton}>닫기</button>
           </div>
 
-          <div className="space-y-3.5">
+          <div className={styles.fields}>
             <Field label="제목">
-              <input
-                autoFocus
-                value={title}
-                maxLength={MAX_TITLE}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="예: 주간 팀 미팅"
-                className="w-full border-0 border-b-2 border-[#dadce0] px-0 py-1.5 text-base outline-none sm:text-[15px] focus:border-[#1a73e8]"
-              />
+              <input ref={initialFocusRef} value={title} maxLength={MAX_TITLE}
+                onChange={(event) => setTitle(event.target.value)} placeholder="예: 주간 팀 미팅"
+                className={styles.input} />
             </Field>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className={styles.twoColumns}>
               <Field label="예약자 이름">
-                <input
-                  value={organizer}
-                  maxLength={MAX_ORGANIZER}
-                  onChange={(e) => setOrganizer(e.target.value)}
-                  placeholder="이름 입력"
-                  className="w-full rounded-md border border-[#dadce0] px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
-                />
+                <input value={organizer} maxLength={MAX_ORGANIZER}
+                  onChange={(event) => setOrganizer(event.target.value)} placeholder="이름 입력"
+                  className={styles.input} required />
               </Field>
               <Field label="회의실">
-                <select
-                  value={roomId}
-                  onChange={(e) => setRoomId(e.target.value)}
-                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
-                >
-                  {ROOMS.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.mark} {r.name} ({r.capacity}인 · {r.location})
-                    </option>
+                <select value={roomId} onChange={(event) => setRoomId(event.target.value)} className={styles.input}>
+                  {ROOMS.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>{candidate.name}</option>
                   ))}
                 </select>
               </Field>
             </div>
 
             <Field label="날짜">
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-md border border-[#dadce0] px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
-              />
+              <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className={styles.input} />
             </Field>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="시작">
-                <select
-                  value={start}
-                  onChange={(e) => setStart(e.target.value)}
-                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
-                >
-                  {timeOptions.slice(0, -1).map((t) => (
-                    <option key={t} value={t}>
-                      {labelForTime(t)}
-                    </option>
+            <div className={styles.twoColumns}>
+              <Field label="시작 시간">
+                <select value={start} onChange={(event) => setStart(event.target.value)} className={styles.input}>
+                  {timeOptions.slice(0, -1).map((time) => (
+                    <option key={time} value={time}>{labelForTime(time)}</option>
                   ))}
                 </select>
               </Field>
-              <Field label="종료">
-                <select
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                  className="w-full rounded-md border border-[#dadce0] bg-white px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
-                >
-                  {endOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {labelForTime(t)}
-                    </option>
+              <Field label="종료 시간">
+                <select value={end} onChange={(event) => setEnd(event.target.value)} className={styles.input}>
+                  {endOptions.map((time) => (
+                    <option key={time} value={time}>{labelForTime(time)}</option>
                   ))}
                 </select>
               </Field>
             </div>
 
+            <div className={styles.timeSummary} aria-live="polite">
+              <span>{date}</span>
+              <strong>{labelForTime(start)} – {labelForTime(end)}</strong>
+              <span>{room?.name}</span>
+            </div>
+
             <Field label="메모 (선택)">
-              <textarea
-                value={note}
-                maxLength={MAX_NOTE}
-                onChange={(e) => setNote(e.target.value)}
-                rows={4}
-                placeholder="안건, 참석자 등"
-                className="w-full resize-none rounded-md border border-[#dadce0] px-2.5 py-2 text-base outline-none sm:text-sm focus:border-[#1a73e8]"
-              />
+              <textarea value={note} maxLength={MAX_NOTE} onChange={(event) => setNote(event.target.value)}
+                rows={3} placeholder="안건, 참석자 등" className={`${styles.input} ${styles.textarea}`} />
             </Field>
 
-            {error && (
-              <div className="rounded-md bg-[#fce8e6] px-3 py-2 text-sm text-[#c5221f]">
-                {error}
-              </div>
-            )}
+            {error && <div id={errorId} role="alert" className={styles.error}>{error}</div>}
           </div>
 
-          <div className="mt-5 flex justify-end gap-2">
-            <button
-              onClick={onClose}
-              className="rounded-md px-4 py-2 text-sm font-medium text-[#1a73e8] hover:bg-[#f1f3f4]"
-            >
-              취소
-            </button>
-            <button
-              onClick={submit}
-              disabled={submitting}
-              className="rounded-md bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#1765cc] disabled:opacity-60"
-            >
-              {submitting ? "저장 중…" : isEdit ? "저장" : "예약하기"}
+          <div className={styles.actions}>
+            <button type="button" onClick={onClose} className={styles.secondaryButton}>취소</button>
+            <button type="submit" disabled={submitting} className={styles.primaryButton}>
+              {submitting ? "저장 중…" : isEdit ? "변경 저장" : "예약하기"}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-medium text-[#5f6368]">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className={styles.field}><span className={styles.label}>{label}</span>{children}</label>;
 }

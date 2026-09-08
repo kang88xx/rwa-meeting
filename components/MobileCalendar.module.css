@@ -1,0 +1,565 @@
+.calendar {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  color: #20242a;
+}
+
+.controls {
+  flex: 0 0 auto;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #e5e8ed;
+  background: #fff;
+}
+
+.navigation,
+.viewOptions,
+.roomFilters,
+.dayToggle {
+  display: flex;
+  align-items: center;
+}
+
+.navigation {
+  min-height: 44px;
+  gap: 3px;
+}
+
+.todayButton,
+.iconButton,
+.datePicker,
+.roomFilters button,
+.dayToggle button {
+  border: 1px solid #d8dde5;
+  background: #fff;
+  color: #394250;
+  cursor: pointer;
+}
+
+.todayButton {
+  min-width: 50px;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #1769d2;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.iconButton {
+  display: inline-flex;
+  width: 36px;
+  min-width: 36px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-color: transparent;
+  border-radius: 8px;
+}
+
+.icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.monthTitle {
+  min-width: 0;
+  margin-inline: auto 4px;
+  overflow: hidden;
+  color: #262c35;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datePicker {
+  position: relative;
+  display: inline-flex;
+  width: 40px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.datePicker input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.viewOptions {
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.roomFilters,
+.dayToggle {
+  overflow: hidden;
+  border: 1px solid #d8dde5;
+  border-radius: 8px;
+}
+
+.roomFilters button,
+.dayToggle button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 0;
+  border-right: 1px solid #e3e6eb;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.roomFilters button:last-child,
+.dayToggle button:last-child {
+  border-right: 0;
+}
+
+.roomFilters button[aria-pressed="true"],
+.dayToggle button[aria-pressed="true"] {
+  background: #edf4ff;
+  color: #1167d4;
+  font-weight: 700;
+}
+
+.roomDot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.dayHeaderGuard {
+  flex: 0 0 auto;
+  padding-right: 12px;
+  border-bottom: 1px solid #dfe3e9;
+  background: #fff;
+}
+
+.dayHeaderGrid {
+  display: grid;
+}
+
+.timeHeader {
+  min-width: 0;
+  border-right: 1px solid #e0e4ea;
+}
+
+.dayHeader {
+  display: flex;
+  min-width: 0;
+  min-height: 70px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 0;
+  border-right: 1px solid #eef0f3;
+  background: #fff;
+  color: #394250;
+  cursor: pointer;
+}
+
+.weekdayLine {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.dayHeader .weekdayLine,
+.weekdayLine span {
+  color: #69717e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.weekdayLine em {
+  overflow: hidden;
+  color: #8a929d;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.dayHeader strong {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 21px;
+  font-weight: 520;
+  line-height: 1;
+}
+
+.weekdayLine .sunday {
+  color: #de4c40;
+}
+
+.todayHeader {
+  background: #f7f9ff;
+}
+
+.dayHeader .todayNumber {
+  background: #2878e6;
+  color: #fff;
+  box-shadow: 0 2px 5px rgb(40 120 230 / 22%);
+}
+
+.scrollBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-y;
+}
+
+.timeline {
+  display: grid;
+  min-width: 0;
+}
+
+.timeGutter {
+  position: relative;
+  height: 100%;
+  border-right: 1px solid #dfe3e9;
+  background: #fff;
+}
+
+.timeLabel {
+  position: absolute;
+  right: 7px;
+  z-index: 2;
+  transform: translateY(-50%);
+  color: #6d7580;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.dayColumn {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid #dfe3e9;
+  background: #fff;
+  outline-offset: -2px;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.keyboardCreate {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: 18;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.keyboardCreate:focus-visible {
+  width: calc(100% - 6px);
+  height: auto;
+  padding: 7px 4px;
+  border: 1px solid #1769d2;
+  border-radius: 5px;
+  clip-path: none;
+  background: #fff;
+  color: #1769d2;
+  font-size: 10px;
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.todayColumn {
+  background: #fbfcff;
+}
+
+.hourLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e2e5ea;
+  pointer-events: none;
+}
+
+.currentTime {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  height: 2px;
+  background: #dc4f43;
+  pointer-events: none;
+}
+
+.currentTime > span {
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: 9px;
+  height: 9px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: #dc4f43;
+}
+
+.event {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  overflow: hidden;
+  padding: 5px 5px 4px 7px;
+  border: 1px solid #69717e;
+  border-left-width: 3px;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgb(23 31 44 / 10%);
+  color: #20242a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event:focus-visible {
+  z-index: 20;
+  outline: 2px solid #1769d2;
+  outline-offset: -2px;
+}
+
+.eventRoom,
+.eventTitle,
+.eventTime {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventRoom {
+  color: #26313e;
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1.2;
+}
+
+.eventTitle {
+  color: #252c35;
+  font-size: 11px;
+  font-weight: 620;
+  line-height: 1.18;
+}
+
+.eventTime {
+  color: #4f5967;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.narrowEvent {
+  padding-inline: 4px 2px;
+  border-left-width: 2px;
+}
+
+.narrowEvent .eventRoom {
+  font-size: 9px;
+}
+
+.narrowEvent .eventTitle {
+  font-size: 10px;
+}
+
+.shortEvent {
+  justify-content: center;
+  gap: 0;
+  padding-block: 2px;
+}
+
+.shortEvent .eventRoom,
+.shortEvent .eventTime {
+  font-size: 9px;
+  line-height: 1.05;
+}
+
+.singleDay .event:not(.shortEvent) .eventRoom { font-size:11px; }
+.singleDay .event:not(.shortEvent) .eventTitle { font-size:13px; }
+.singleDay .event:not(.shortEvent) .eventTime { font-size:10px; }
+
+.notice {
+  position: absolute;
+  left: 50%;
+  bottom: 86px;
+  z-index: 30;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 10px 14px;
+  transform: translateX(-50%);
+  border: 1px solid #d6e2f4;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 5px 22px rgb(27 42 67 / 16%);
+  color: #34517e;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.floatingCreate {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  z-index: 25;
+  display: inline-flex;
+  width: 58px;
+  height: 58px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 18px;
+  background: #2878e6;
+  box-shadow: 0 7px 18px rgb(31 87 168 / 28%);
+  cursor: pointer;
+}
+
+.floatingCreate .icon {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
+}
+
+.pickerDialog {
+  width: min(100%, 560px);
+  max-width: none;
+  max-height: min(84dvh, 760px);
+  margin: auto auto 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 18px 18px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 36px rgb(13 25 46 / 24%);
+}
+
+.pickerDialog::backdrop {
+  background: rgb(20 29 43 / 42%);
+}
+
+.pickerSheet {
+  max-height: min(84dvh, 760px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pickerHeading {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e5e8ed;
+  background: #fff;
+}
+
+.pickerHeading > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pickerHeading span {
+  color: #69717e;
+  font-size: 11px;
+}
+
+.pickerHeading strong {
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickerHeading button {
+  min-width: 52px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f4f8;
+  color: #435062;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+@media (max-width: 359px) {
+  .controls {
+    padding-inline: 8px;
+  }
+
+  .monthTitle {
+    font-size: 15px;
+  }
+
+  .roomFilters button,
+  .dayToggle button {
+    padding-inline: 7px;
+    font-size: 11px;
+  }
+
+  .dayToggle button {
+    min-width: 34px;
+    padding-inline: 5px;
+  }
+
+  .event {
+    padding-inline: 3px 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollBody {
+    scroll-behavior: auto;
+  }
+}

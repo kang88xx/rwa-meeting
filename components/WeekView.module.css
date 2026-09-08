@@ -1,0 +1,325 @@
+.weekView {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  color: #171a21;
+}
+
+.headerScrollGuard {
+  flex: 0 0 auto;
+  padding-right: 12px;
+  border-bottom: 1px solid #e4e7ec;
+  background: #fff;
+}
+
+.header {
+  display: grid;
+  min-width: 0;
+}
+
+.timeHeader {
+  border-right: 1px solid #e4e7ec;
+}
+
+.dayHeader {
+  display: flex;
+  min-width: 0;
+  height: 74px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid #eef0f3;
+}
+
+.todayHeader {
+  background: #f5f8ff;
+}
+
+.weekday {
+  color: #5e6470;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.sunday {
+  color: #e64a3b;
+}
+
+.dateNumber {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #191c22;
+  font-size: 24px;
+  font-weight: 520;
+  line-height: 1;
+}
+
+.todayNumber {
+  background: #2878e6;
+  color: #fff;
+  box-shadow: 0 2px 5px rgb(40 120 230 / 24%);
+}
+
+.scrollBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.timeline {
+  display: grid;
+  min-width: 0;
+}
+
+.timeGutter {
+  position: relative;
+  height: 100%;
+  border-right: 1px solid #e4e7ec;
+  background: #fff;
+}
+
+.timeLabel {
+  position: absolute;
+  right: 12px;
+  z-index: 2;
+  transform: translateY(-50%);
+  color: #69707d;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.dayColumn {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid #eef0f3;
+  background: #fff;
+  user-select: none;
+}
+
+.todayColumn {
+  background: #f7f9ff;
+}
+
+.hourLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e8eaee;
+}
+
+.selection {
+  pointer-events: none;
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  z-index: 10;
+  overflow: hidden;
+  border: 1px solid #2878e6;
+  border-radius: 6px;
+  background: rgb(40 120 230 / 12%);
+}
+
+.selectionTime {
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  color: #1767cf;
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.currentTime {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  height: 2px;
+  background: #e64235;
+}
+
+.currentTimeDot {
+  position: absolute;
+  top: 50%;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: #e64235;
+}
+
+.event {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  overflow: hidden;
+  padding: 6px 8px 6px 9px;
+  border: 1px solid rgb(22 30 45 / 9%);
+  border-left-width: 4px;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgb(20 29 43 / 8%);
+  color: #1f2630;
+  text-align: left;
+  transition: box-shadow 120ms ease, filter 120ms ease, transform 120ms ease;
+}
+
+.event:hover {
+  z-index: 12;
+  filter: saturate(1.04) brightness(1.01);
+  box-shadow: 0 3px 8px rgb(20 29 43 / 15%);
+}
+
+.event:focus-visible {
+  z-index: 13;
+  outline: 2px solid #2878e6;
+  outline-offset: -2px;
+}
+
+.eventTitle {
+  flex-shrink: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  color: #171b22;
+  font-size: 13px;
+  font-weight: 720;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.eventTime {
+  flex-shrink: 0;
+  overflow: hidden;
+  color: #3d4652;
+  font-size: 10px;
+  font-family: Arial, sans-serif;
+  font-weight: 530;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventRoom {
+  flex-shrink: 0;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 1px 5px;
+  border: 1px solid rgb(31 38 48 / 15%);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 58%);
+  color: #424a55;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventOrganizer {
+  overflow: hidden;
+  color: #59616c;
+  font-size: 10px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.narrowEvent {
+  gap: 2px;
+  padding: 6px 5px 5px 6px;
+  border-left-width: 3px;
+}
+
+.narrowEvent .eventTitle {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.narrowEvent .eventTime,
+.narrowEvent .eventRoom {
+  font-size: 10px;
+}
+
+.narrowEvent .eventRoom {
+  padding-inline: 3px;
+}
+
+.shortEvent {
+  justify-content: center;
+  gap: 0;
+  padding: 3px 5px 3px 6px;
+  border-left-width: 3px;
+}
+
+.shortEvent .eventTitle {
+  display: block;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortEvent .eventTime {
+  margin-top: 1px;
+  font-size: 9px;
+  line-height: 1.05;
+}
+
+/* Preserve both times when the restored sidebar leaves narrower day columns. */
+@media (min-width: 960px) and (max-width: 1359px) {
+  .narrowEvent:not(.shortEvent) { padding-block: 4px; }
+  .narrowEvent:not(.shortEvent) .eventTitle { font-size: 11px; line-height: 1.1; }
+  .narrowEvent:not(.shortEvent) .eventTime { white-space: normal; line-height: 1.05; }
+}
+
+.shortHeading {
+  display: flex;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 3px;
+}
+
+.shortHeading .eventTitle {
+  min-width: 0;
+  flex: 1;
+}
+
+.shortRoom {
+  flex: 0 0 auto;
+  border-radius: 2px;
+  padding: 1px 2px;
+  background: rgb(255 255 255 / 58%);
+  color: #424a55;
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1;
+}
