@@ -27,11 +27,11 @@
 .dayHeader {
   display: flex;
   min-width: 0;
-  height: 74px;
+  height: 48px;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: 6px;
   border-right: 1px solid #eef0f3;
 }
 
@@ -52,13 +52,13 @@
 
 .dateNumber {
   display: flex;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   color: #191c22;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 520;
   line-height: 1;
 }
@@ -274,7 +274,7 @@
 .shortEvent {
   justify-content: center;
   gap: 0;
-  padding: 3px 5px 3px 6px;
+  padding: 2px 5px 2px 6px;
   border-left-width: 3px;
 }
 
@@ -322,4 +322,26 @@
   font-size: 9px;
   font-weight: 650;
   line-height: 1;
+}
+
+/* Keep room and time readable when a one-hour booking has less vertical space. */
+.compactEvent {
+  padding-block: 3px;
+}
+
+.compactEvent .eventTitle {
+  display: block;
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* In narrow columns, reserve two time lines inside a 30-minute card. */
+@media (min-width: 960px) and (max-width: 1359px) {
+  .narrowEvent { padding-inline: 3px; }
+  .shortEvent.narrowEvent { padding-block: 0; }
+  .shortEvent.narrowEvent .eventTitle { font-size: 10px; line-height: 1; }
+  .shortEvent.narrowEvent .shortRoom { font-size: 8px; }
+  .shortEvent.narrowEvent .eventTime { line-height: 1; white-space: normal; }
 }

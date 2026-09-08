@@ -19,7 +19,7 @@ import {
 import styles from "./WeekView.module.css";
 
 export { START_HOUR, END_HOUR };
-export const HOUR_HEIGHT = 80; // px
+export const HOUR_HEIGHT = 64; // px
 
 type Selection = { key: string; startMin: number; endMin: number };
 
@@ -378,7 +378,7 @@ export default function WeekView({
                         e.stopPropagation();
                         onEventClick(p, e.currentTarget);
                       }}
-                      className={`${styles.event} ${isShort ? styles.shortEvent : ""} ${isNarrow ? styles.narrowEvent : ""}`}
+                      className={`${styles.event} ${isShort ? styles.shortEvent : ""} ${isNarrow ? styles.narrowEvent : ""} ${!isShort && p.height <= HOUR_HEIGHT ? styles.compactEvent : ""}`}
                       style={{
                         top: p.top,
                         height: p.height - 1,

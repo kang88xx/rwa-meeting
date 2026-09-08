@@ -101,6 +101,13 @@ export default function CalendarApp() {
           <span className={styles.brandDivider} aria-hidden="true" />
           <h1>회의실 예약</h1>
         </a>
+        <nav className={styles.toolbar} aria-label="주간 캘린더 탐색">
+          <button className={styles.todayButton} onClick={() => setAnchor(new Date())}>오늘</button>
+          <button className={styles.iconButton} aria-label="이전 주" onClick={() => setAnchor(addDays(anchor,-7))}><Icon name="chevron-left" /></button>
+          <button className={styles.iconButton} aria-label="다음 주" onClick={() => setAnchor(addDays(anchor,7))}><Icon name="chevron-right" /></button>
+          <h2 aria-label={rangeTitle(days)} title={rangeTitle(days)}>{anchor.getFullYear()}년 {anchor.getMonth() + 1}월</h2>
+          <span className={styles.weekLabel}>주간</span>
+        </nav>
         <a href="/history" className={styles.historyLink}><Icon name="calendar3" />예약 내역</a>
       </header>
       <div className={styles.workspace}>
@@ -121,13 +128,6 @@ export default function CalendarApp() {
           <p className={styles.sidebarHint}>같은 시간의 두 회의실 예약은<br />나란히 표시됩니다.</p>
         </aside>
         <main className={styles.calendarPane}>
-          {!isMobile && <div className={styles.toolbar}>
-            <button className={styles.todayButton} onClick={() => setAnchor(new Date())}>오늘</button>
-            <button className={styles.iconButton} aria-label="이전 주" onClick={() => setAnchor(addDays(anchor,-7))}><Icon name="chevron-left" /></button>
-            <h2>{rangeTitle(days)}</h2>
-            <button className={styles.iconButton} aria-label="다음 주" onClick={() => setAnchor(addDays(anchor,7))}><Icon name="chevron-right" /></button>
-            <span className={styles.weekLabel}>주간 캘린더</span>
-          </div>}
           {loadError && <div className={styles.error} role="alert">예약 정보를 불러오지 못했습니다. <button onClick={() => {setLoading(true);load();}}>다시 시도</button></div>}
           {loading ? <div className={styles.loading} role="status">일정을 불러오는 중입니다.</div> : isMobile ?
             <MobileCalendar anchor={anchor} onAnchorChange={setAnchor} reservations={reservations} colors={colors} onCreate={openCreate} onEventClick={eventClick} /> :
